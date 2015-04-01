@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+[ $# -lt 1 ] && { echo "Usage: $0 BASE_IMAGE"; exit 1; }
+
+fetch_profile () {
+  grep "^\([^:]*:\)\{2\}$1" "$2"
+}
+
+parse_profile () {
+  echo "$1" | awk -F':' "{ print \$$2; }"
+}
+
+BASE_IMAGE="$1"
+USER_PROFILE="$(fetch_profile "${UID}" /etc/passwd)"
+USER="$(parse_profile "${USER_PROFILE}" 1)"
+GID="$(parse_profile "${USER_PROFILE}" 4)"
+HOME="$(parse_profile "${USER_PROFILE}" 6)"
+GROUP_PROFILE="$(fetch_profile "${GID}" /etc/group)"
+GROUP="$(parse_profile "${USER_PROFILE}" 1)"
+
+TMPFILE=/tmp/Dockerfile.$(date +%s)
+
+cat <<EOF > ${TMPFILE}
+FROM ${BASE_IMAGE}
+
+RUN mkdir -p ${HOME} && \\
+    echo "${USER}:x:${UID}:${GID}::${HOME}:/bin/bash" >> /etc/passwd && \\
+    echo "${GROUP}:x:${GID}:" >> /etc/group && \\
+    echo "${USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USER} && \\
+    chmod 0440 /etc/sudoers.d/${USER} && \\
+    chown ${UID}:${GID} -R ${HOME}
+
+USER ${USER}
+ENV HOME ${HOME}
+CMD /bin/bash
+EOF
+
+echo "Genereated Dockerfile:"
+echo "======================"
+cat ${TMPFILE}
+echo "======================"
+
+read -p "Build image now? (y/N) " answer
+while true; do
+  case "$answer" in
+    [yY])
+      echo "Now building the image..."
+      docker build -t "$BASE_IMAGE-parallel" - < ${TMPFILE}
+      break;;
+    [nN])
+      break;;
+    *)
+      read -p "$answer is an invalid input, put either 'y' or 'n': " answer
+  esac
+done
+
+rm ${TMPFILE}

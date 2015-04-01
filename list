@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+F_C=1
+F_I=1
+case "$1" in
+  a|all|"")
+    ;;
+  i|images)
+    F_C=
+    ;;
+  c|containers)
+    F_I=
+    ;;
+  *)
+    echo "$1 is not a valid type!"
+    echo "Usage: $0 [a|all|c|containers|i|images]"
+    exit 1
+esac
+
+if [ $F_I ]; then
+  echo "Images"
+  echo "======"
+  docker images | grep '^[^ ]* *[^ ]*-parallel' \
+      | awk -F' {2,}' '{ printf "%s:%s\n", $1, $2; }'
+  echo
+fi
+
+if [ $F_C ]; then
+  echo "Containers"
+  echo "=========="
+  printf "%s  %-30s %-20s %s\n" "CONTAINER ID" "IMAGE" "NAME" "STATUS"
+  docker ps -a | grep '^[^ ]* *[^ ]*-parallel' \
+      | awk -F' {2,}' '{ printf "%s  %-30s %-20s %s\n", $1, $2, $6, $5; }'
+fi

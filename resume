@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+docker start $@
+
+echo "> Resume container. (press Ctrl+P then Ctrl+Q to detach)"
+docker attach --sig-proxy=true $@

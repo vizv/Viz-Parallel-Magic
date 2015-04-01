@@ -1,0 +1,39 @@
+#!/bin/bash
+set -e
+
+NAME=
+[ $# -lt 1 ] && { echo "Usage: $0 BASE_IMAGE [CONTAINER_NAME]"; exit 1; }
+[ $2 ] && NAME=$2
+
+if $(docker images | awk '{ print $1":"$2; }' | grep -q "$1-parallel"); then
+  echo "> Image found!"
+else
+  echo "> Image not found!"
+  read -p "Do you want to build it? (y/N) " answer
+  while true; do
+    case "$answer" in
+      [yY])
+        if $(./build "$1"); then
+          echo "> Image has been built."
+        else
+          echo "> Image failed to built."
+          exit 1
+        fi
+        break;;
+      [nN])
+        echo "> Image will not be built."
+        exit 0
+        break;;
+      *)
+        read -p "$answer is an invalid input, put either 'y' or 'n': " answer
+    esac
+  done
+fi
+
+echo "> start container! (press Ctrl+P then Ctrl+Q to detach)"
+docker run -ti -e DISPLAY=$DISPLAY \
+               -v /tmp/.X11-unix:/tmp/.X11-unix \
+               -v $HOME:$HOME \
+               --name="$NAME" \
+               --net=host \
+               "$1-parallel"

@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $(realpath "$0"))
+
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 COMMAND [arg...]"
+  echo
+  echo "Viz Parallel Magic - A X11 Dockerization Magic!"
+  echo
+  echo "Commands:"
+  echo "    build     Build a parallel magic image"
+  echo "    run       Run a pre-build container"
+  echo "    list      List VPM images/containers"
+  echo "    kill      Kill a container"
+  echo "    resume    Resume a container and attach to it"
+  echo "    destroy   Permanently destroy a container"
+
+  exit 1
+fi
+
+"./$@"
