@@ -36,4 +36,9 @@ docker run -ti -e DISPLAY=$DISPLAY \
                -v $HOME:$HOME \
                --name="$NAME" \
                --net=host \
+               -v /dev/snd:/dev/snd --privileged \
+               -v /dev/shm:/dev/shm \
+               -v /etc/machine-id:/etc/machine-id \
+               -v /var/lib/dbus:/var/lib/dbus \
+               -v /run/user/$UID/pulse/native:/run/user/$UID/pulse/native \
                "$1-parallel"
